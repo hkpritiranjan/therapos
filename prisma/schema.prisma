@@ -1,0 +1,282 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgvector(map: "vector")]
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum PatientStatus {
+  ACTIVE
+  INACTIVE
+  WAITLIST
+  DISCHARGED
+}
+
+enum SessionType {
+  INDIVIDUAL
+  COUPLES
+  FAMILY
+  GROUP
+}
+
+enum SessionStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum NoteFormat {
+  SOAP
+  DAP
+  BIRP
+  FREE
+}
+
+enum GoalStatus {
+  ACTIVE
+  ACHIEVED
+  PAUSED
+  ABANDONED
+}
+
+enum HomeworkStatus {
+  ASSIGNED
+  COMPLETED
+  PARTIAL
+  SKIPPED
+}
+
+enum Plan {
+  TRIAL
+  SOLO
+  CLINIC
+}
+
+enum SubStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  PAUSED
+  CANCELLED
+}
+
+// ─── Models ──────────────────────────────────────────────────────────────────
+
+model User {
+  id             String   @id @default(cuid())
+  clerkId        String   @unique
+  email          String   @unique
+  name           String
+  licenseNumber  String?
+  licenseState   String?
+  credentials    String[]
+  modalities     String[]
+  timezone       String   @default("UTC")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  patients     Patient[]
+  sessions     Session[]
+  subscription Subscription?
+  auditLogs    AuditLog[]
+}
+
+model Patient {
+  id                  String        @id @default(cuid())
+  therapistId         String
+  therapist           User          @relation(fields: [therapistId], references: [id])
+  firstName           String
+  lastName            String
+  preferredName       String?
+  dateOfBirth         DateTime?
+  email               String?
+  phone               String?
+  primaryConcerns     String[]
+  diagnoses           String[]
+  modality            String?
+  sessionFreq         String?
+  status              PatientStatus @default(ACTIVE)
+  startDate           DateTime      @default(now())
+  endDate             DateTime?
+  aiSummary           String?
+  aiSummaryUpdatedAt  DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  sessions   Session[]
+  goals      Goal[]
+  homework   Homework[]
+  embeddings PatientEmbedding[]
+
+  @@index([therapistId])
+  @@index([therapistId, status])
+}
+
+model Session {
+  id            String        @id @default(cuid())
+  patientId     String
+  patient       Patient       @relation(fields: [patientId], references: [id])
+  therapistId   String
+  therapist     User          @relation(fields: [therapistId], references: [id])
+  sessionNumber Int
+  scheduledAt   DateTime
+  startedAt     DateTime?
+  endedAt       DateTime?
+  durationMins  Int?
+  type          SessionType   @default(INDIVIDUAL)
+  status        SessionStatus @default(SCHEDULED)
+  aiPrep        Json?
+  aiPrepGenAt   DateTime?
+  rawNotes      String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  note     SessionNote?
+  homework Homework[]
+
+  @@unique([patientId, sessionNumber])
+  @@index([patientId])
+  @@index([therapistId])
+  @@index([therapistId, scheduledAt])
+}
+
+model SessionNote {
+  id             String     @id @default(cuid())
+  sessionId      String     @unique
+  session        Session    @relation(fields: [sessionId], references: [id])
+  format         NoteFormat @default(SOAP)
+  // SOAP fields
+  subjective     String?
+  objective      String?
+  assessment     String?
+  plan           String?
+  // DAP fields
+  data           String?
+  dapAssessment  String?
+  dapPlan        String?
+  // BIRP fields
+  behavior       String?
+  intervention   String?
+  birpResponse   String?
+  birpPlan       String?
+  // Free text
+  freeText       String?
+  // AI metadata
+  aiDraft        Json?
+  aiGenerated    Boolean    @default(false)
+  aiModel        String?
+  editedAt       DateTime?
+  isFinalized    Boolean    @default(false)
+  finalizedAt    DateTime?
+  wordCount      Int?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  embedding NoteEmbedding?
+}
+
+model Goal {
+  id             String     @id @default(cuid())
+  patientId      String
+  patient        Patient    @relation(fields: [patientId], references: [id])
+  title          String
+  description    String?
+  category       String?
+  status         GoalStatus @default(ACTIVE)
+  startedAt      DateTime   @default(now())
+  achievedAt     DateTime?
+  progressNotes  Json[]     @default([])
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@index([patientId])
+}
+
+model Homework {
+  id          String        @id @default(cuid())
+  patientId   String
+  patient     Patient       @relation(fields: [patientId], references: [id])
+  sessionId   String?
+  session     Session?      @relation(fields: [sessionId], references: [id])
+  title       String
+  description String
+  category    String?
+  dueBy       DateTime?
+  aiGenerated Boolean       @default(false)
+  status      HomeworkStatus @default(ASSIGNED)
+  completedAt DateTime?
+  notes       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([patientId])
+}
+
+model NoteEmbedding {
+  id          String   @id @default(cuid())
+  noteId      String   @unique
+  note        SessionNote @relation(fields: [noteId], references: [id])
+  patientId   String
+  therapistId String
+  content     String
+  embedding   Unsupported("vector(1536)")
+  createdAt   DateTime @default(now())
+
+  @@index([patientId])
+  @@index([therapistId])
+}
+
+model PatientEmbedding {
+  id        String   @id @default(cuid())
+  patientId String
+  patient   Patient  @relation(fields: [patientId], references: [id])
+  type      String
+  content   String
+  embedding Unsupported("vector(1536)")
+  createdAt DateTime @default(now())
+
+  @@index([patientId])
+}
+
+model Subscription {
+  id                 String    @id @default(cuid())
+  userId             String    @unique
+  user               User      @relation(fields: [userId], references: [id])
+  plan               Plan      @default(TRIAL)
+  status             SubStatus @default(TRIALING)
+  stripeCustomerId   String?
+  stripeSubId        String?
+  trialEndsAt        DateTime?
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  cancelAt           DateTime?
+  cancelledAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  patientId  String?
+  action     String
+  resource   String
+  resourceId String
+  metadata   Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([patientId])
+  @@index([createdAt])
+}
