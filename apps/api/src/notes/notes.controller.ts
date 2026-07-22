@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { IsString, IsOptional, IsEnum, IsBoolean } from 'class-validator';
-import { DevAuthGuard } from '../common/dev-auth.guard';
+import { JwtAuthGuard } from '../common/jwt-auth.guard';
 import { NotesService } from './notes.service';
 import { NoteFormat } from '@therapos/shared';
 
@@ -71,7 +71,7 @@ class UpdateNoteDto {
   @IsOptional() @IsString() freeText?: string;
 }
 
-@UseGuards(DevAuthGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('sessions/:sessionId/note')
 export class NotesController {
   constructor(private readonly notesService: NotesService) {}

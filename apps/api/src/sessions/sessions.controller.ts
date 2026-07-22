@@ -17,7 +17,7 @@ import {
   IsDateString,
   IsEnum,
 } from 'class-validator';
-import { DevAuthGuard } from '../common/dev-auth.guard';
+import { JwtAuthGuard } from '../common/jwt-auth.guard';
 import { SessionsService } from './sessions.service';
 import { SessionType, SessionStatus } from '@therapos/shared';
 
@@ -51,7 +51,7 @@ class UpdateSessionDto {
   rawNotes?: string;
 }
 
-@UseGuards(DevAuthGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('sessions')
 export class SessionsController {
   constructor(private readonly sessionsService: SessionsService) {}

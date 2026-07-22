@@ -75,6 +75,7 @@ model User {
   clerkId        String   @unique
   email          String   @unique
   name           String
+  passwordHash   String?
   licenseNumber  String?
   licenseState   String?
   credentials    String[]

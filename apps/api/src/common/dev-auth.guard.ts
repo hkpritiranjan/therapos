@@ -9,15 +9,6 @@ import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import { PrismaService } from './prisma.service';
 
-// Extend Express Request to carry user
-declare global {
-  namespace Express {
-    interface Request {
-      user?: DevUser;
-    }
-  }
-}
-
 export interface DevUser {
   id: string;
   email: string;
@@ -26,6 +17,22 @@ export interface DevUser {
   credentials: string[];
   modalities: string[];
   timezone: string;
+}
+
+// Merge DevUser fields into Express.User so req.user carries our shape
+// (passport already declares req.user as Express.User | undefined)
+declare global {
+  namespace Express {
+    interface User {
+      id: string;
+      email: string;
+      name: string;
+      clerkId: string;
+      credentials: string[];
+      modalities: string[];
+      timezone: string;
+    }
+  }
 }
 
 const DEV_USER: DevUser = {

@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { IsString, IsOptional, IsEnum } from 'class-validator';
-import { DevAuthGuard } from '../common/dev-auth.guard';
+import { JwtAuthGuard } from '../common/jwt-auth.guard';
 import { AiService } from './ai.service';
 import { NoteFormat } from '@therapos/shared';
 
@@ -30,7 +30,7 @@ class SuggestHomeworkDto {
   sessionId: string;
 }
 
-@UseGuards(DevAuthGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('ai')
 export class AiController {
   constructor(private readonly aiService: AiService) {}

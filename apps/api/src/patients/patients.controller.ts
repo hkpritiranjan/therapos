@@ -17,7 +17,7 @@ import {
 import { Request } from 'express';
 import { IsString, IsOptional, IsEmail, IsDateString, IsArray, IsEnum } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { DevAuthGuard } from '../common/dev-auth.guard';
+import { JwtAuthGuard } from '../common/jwt-auth.guard';
 import { PatientsService } from './patients.service';
 import { PatientStatus } from '@therapos/shared';
 
@@ -133,7 +133,7 @@ class PatientQueryDto {
   limit?: number;
 }
 
-@UseGuards(DevAuthGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('patients')
 export class PatientsController {
   constructor(private readonly patientsService: PatientsService) {}
