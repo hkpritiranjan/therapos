@@ -301,17 +301,19 @@ Return ONLY valid JSON.`;
 PATIENT CONTEXT:
 ${context}
 
-Return a JSON array with exactly 3 items:
-[
-  {
-    "title": "Short homework title",
-    "description": "Detailed instructions for the client (2-3 sentences)",
-    "category": "One of: CBT, DBT, Mindfulness, Behavioral, Journaling, Psychoeducation, Exposure, Social, Other",
-    "rationale": "Why this homework is clinically appropriate for this client (1 sentence)"
-  }
-]
+Return a JSON object with a "suggestions" key containing exactly 3 items:
+{
+  "suggestions": [
+    {
+      "title": "Short homework title",
+      "description": "Detailed instructions for the client (2-3 sentences)",
+      "category": "One of: CBT, DBT, Mindfulness, Behavioral, Journaling, Psychoeducation, Exposure, Social, Other",
+      "rationale": "Why this homework is clinically appropriate for this client (1 sentence)"
+    }
+  ]
+}
 
-Return ONLY valid JSON array.`;
+Return ONLY valid JSON.`;
 
     const response = await this.openai.chat.completions.create({
       model: 'gpt-4o',
@@ -321,9 +323,8 @@ Return ONLY valid JSON array.`;
       response_format: { type: 'json_object' },
     });
 
-    const content = response.choices[0]?.message?.content ?? '{"items":[]}';
+    const content = response.choices[0]?.message?.content ?? '{"suggestions":[]}';
     const parsed = JSON.parse(content);
-    // Handle both array and object responses
-    return Array.isArray(parsed) ? parsed : (parsed.items ?? parsed.homework ?? []);
+    return Array.isArray(parsed) ? parsed : (parsed.suggestions ?? parsed.items ?? parsed.homework ?? []);
   }
 }

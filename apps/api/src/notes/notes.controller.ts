@@ -20,6 +20,8 @@ class CreateNoteDto {
   @IsEnum(['SOAP', 'DAP', 'BIRP', 'FREE'])
   format: NoteFormat;
 
+  @IsOptional() @IsString() rawNotes?: string;
+
   // SOAP
   @IsOptional() @IsString() subjective?: string;
   @IsOptional() @IsString() objective?: string;
@@ -45,6 +47,8 @@ class UpdateNoteDto {
   @IsOptional()
   @IsEnum(['SOAP', 'DAP', 'BIRP', 'FREE'])
   format?: NoteFormat;
+
+  @IsOptional() @IsString() rawNotes?: string;
 
   // SOAP
   @IsOptional() @IsString() subjective?: string;

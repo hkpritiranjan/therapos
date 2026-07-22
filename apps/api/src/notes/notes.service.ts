@@ -14,6 +14,7 @@ import { NoteFormat } from '@therapos/shared';
 
 interface NoteData {
   format?: NoteFormat;
+  rawNotes?: string;
   subjective?: string;
   objective?: string;
   assessment?: string;
@@ -74,6 +75,10 @@ export class NotesService {
     const existing = await this.prisma.sessionNote.findUnique({ where: { sessionId } });
     if (existing) throw new ConflictException('Note already exists for this session. Use PATCH to update.');
 
+    if (data.rawNotes) {
+      await this.prisma.session.update({ where: { id: sessionId }, data: { rawNotes: data.rawNotes } });
+    }
+
     const note = await this.prisma.sessionNote.create({
       data: {
         sessionId,
@@ -103,6 +108,10 @@ export class NotesService {
     const existing = await this.prisma.sessionNote.findUnique({ where: { sessionId } });
     if (!existing) throw new NotFoundException('Note not found. Create it first with POST.');
     if (existing.isFinalized) throw new BadRequestException('Cannot edit a finalized note');
+
+    if (data.rawNotes !== undefined) {
+      await this.prisma.session.update({ where: { id: sessionId }, data: { rawNotes: data.rawNotes } });
+    }
 
     const updated = await this.prisma.sessionNote.update({
       where: { sessionId },

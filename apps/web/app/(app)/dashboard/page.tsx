@@ -1,10 +1,52 @@
-import type { Metadata } from 'next';
+'use client';
+
 import Link from 'next/link';
-import { CalendarDays, Users, Plus, ArrowRight } from 'lucide-react';
+import { CalendarDays, Users, Plus, ArrowRight, ChevronRight } from 'lucide-react';
+import { usePatients } from '@/lib/api';
+import type { Patient, PatientStatus } from '@therapos/shared';
 
-export const metadata: Metadata = { title: 'Dashboard' };
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-function EmptyState({ icon: Icon, title, description }: {
+function getInitials(p: Patient) {
+  return `${p.firstName[0] ?? ''}${p.lastName[0] ?? ''}`.toUpperCase();
+}
+
+function statusBadge(status: PatientStatus) {
+  const config: Record<PatientStatus, { label: string; bg: string; color: string }> = {
+    ACTIVE: { label: 'Active', bg: 'rgba(16,185,129,0.15)', color: '#10B981' },
+    INACTIVE: { label: 'Inactive', bg: 'rgba(148,163,184,0.1)', color: 'var(--text-mid)' },
+    WAITLIST: { label: 'Waitlist', bg: 'rgba(245,158,11,0.15)', color: '#F59E0B' },
+    DISCHARGED: { label: 'Discharged', bg: 'rgba(239,68,68,0.1)', color: '#EF4444' },
+  };
+  const c = config[status] ?? config.INACTIVE;
+  return (
+    <span
+      className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+      style={{ backgroundColor: c.bg, color: c.color }}
+    >
+      {c.label}
+    </span>
+  );
+}
+
+// ── Skeleton ──────────────────────────────────────────────────────────────────
+
+function Skeleton({ className }: { className?: string }) {
+  return (
+    <div
+      className={`animate-pulse rounded-lg ${className ?? ''}`}
+      style={{ backgroundColor: 'var(--bg-elevated)' }}
+    />
+  );
+}
+
+// ── Empty state ───────────────────────────────────────────────────────────────
+
+function EmptyState({
+  icon: Icon,
+  title,
+  description,
+}: {
   icon: React.ElementType;
   title: string;
   description: string;
@@ -17,11 +59,17 @@ function EmptyState({ icon: Icon, title, description }: {
       >
         <Icon size={22} style={{ color: 'var(--accent)' }} />
       </div>
-      <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{title}</p>
-      <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>{description}</p>
+      <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+        {title}
+      </p>
+      <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
+        {description}
+      </p>
     </div>
   );
 }
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
   const today = new Date().toLocaleDateString('en-US', {
@@ -31,13 +79,45 @@ export default function DashboardPage() {
     day: 'numeric',
   });
 
+  const hour = new Date().getHours();
+  const greeting =
+    hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+
+  // Fetch all patients for stats + recent list
+  const { data: allPatients, isLoading: patientsLoading } = usePatients({ limit: 50 });
+  // Fetch active count specifically
+  const { data: activeData } = usePatients({ status: 'ACTIVE', limit: 1 });
+
+  const patients: Patient[] = allPatients?.data ?? [];
+  const activeCount = activeData?.total ?? 0;
+  const recentPatients = patients.slice(0, 3);
+
+  // ── Stats ──────────────────────────────────────────────────────────────────
+  const stats = [
+    {
+      label: 'Active patients',
+      value: patientsLoading ? null : String(activeCount),
+      sub: activeCount === 1 ? '1 active patient' : `${activeCount} active patients`,
+    },
+    {
+      label: "Today's sessions",
+      value: '0',
+      sub: 'No sessions today',
+    },
+    {
+      label: 'Total patients',
+      value: patientsLoading ? null : String(allPatients?.total ?? 0),
+      sub: 'In your roster',
+    },
+  ];
+
   return (
     <div className="mx-auto max-w-5xl space-y-8">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>
-            Good morning
+            {greeting}
           </h1>
           <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>{today}</p>
         </div>
@@ -46,7 +126,6 @@ export default function DashboardPage() {
         <div className="flex gap-2">
           <Link
             href="/patients/new"
-            className="btn-primary text-sm"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -88,23 +167,28 @@ export default function DashboardPage() {
 
       {/* Stats row */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {[
-          { label: 'Active patients', value: '—', sub: 'Loading…' },
-          { label: "Today's sessions", value: '0', sub: 'No sessions today' },
-          { label: 'Pending notes', value: '—', sub: 'Notes to complete' },
-        ].map((stat) => (
+        {stats.map((stat) => (
           <div
             key={stat.label}
             className="rounded-xl border p-5"
             style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border)' }}
           >
-            <p className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+            <p
+              className="text-xs font-medium uppercase tracking-wider"
+              style={{ color: 'var(--text-muted)' }}
+            >
               {stat.label}
             </p>
-            <p className="mt-2 text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>
-              {stat.value}
+            {stat.value === null ? (
+              <Skeleton className="mt-2 h-8 w-16" />
+            ) : (
+              <p className="mt-2 text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                {stat.value}
+              </p>
+            )}
+            <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+              {stat.sub}
             </p>
-            <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>{stat.sub}</p>
           </div>
         ))}
       </div>
@@ -129,7 +213,7 @@ export default function DashboardPage() {
             <Link
               href="/sessions"
               className="flex items-center gap-1 text-xs"
-              style={{ color: 'var(--accent)' }}
+              style={{ color: 'var(--accent)', textDecoration: 'none' }}
             >
               View all <ArrowRight size={12} />
             </Link>
@@ -159,16 +243,76 @@ export default function DashboardPage() {
             <Link
               href="/patients"
               className="flex items-center gap-1 text-xs"
-              style={{ color: 'var(--accent)' }}
+              style={{ color: 'var(--accent)', textDecoration: 'none' }}
             >
               View all <ArrowRight size={12} />
             </Link>
           </div>
-          <EmptyState
-            icon={Users}
-            title="Add your first patient"
-            description="Your patient roster will appear here"
-          />
+
+          {patientsLoading ? (
+            <div className="space-y-3 p-5">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-12" />
+              ))}
+            </div>
+          ) : recentPatients.length === 0 ? (
+            <EmptyState
+              icon={Users}
+              title="Add your first patient"
+              description="Your patient roster will appear here"
+            />
+          ) : (
+            <ul className="divide-y" style={{ borderColor: 'var(--border)' }}>
+              {recentPatients.map((patient) => (
+                <li key={patient.id}>
+                  <Link
+                    href={`/patients/${patient.id}`}
+                    className="flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-[var(--bg-elevated)]"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    <div
+                      className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold"
+                      style={{
+                        backgroundColor: 'var(--accent-subtle)',
+                        color: 'var(--accent)',
+                      }}
+                    >
+                      {getInitials(patient)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className="truncate text-sm font-medium"
+                        style={{ color: 'var(--text-primary)' }}
+                      >
+                        {patient.firstName} {patient.lastName}
+                      </p>
+                      {patient.primaryConcerns.length > 0 && (
+                        <p
+                          className="truncate text-xs"
+                          style={{ color: 'var(--text-muted)' }}
+                        >
+                          {patient.primaryConcerns.slice(0, 2).join(' · ')}
+                        </p>
+                      )}
+                    </div>
+                    {statusBadge(patient.status)}
+                    <ChevronRight size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                  </Link>
+                </li>
+              ))}
+              {(allPatients?.total ?? 0) > 3 && (
+                <li>
+                  <Link
+                    href="/patients"
+                    className="flex items-center justify-center gap-1 py-3 text-xs transition-colors hover:bg-[var(--bg-elevated)]"
+                    style={{ color: 'var(--text-muted)', textDecoration: 'none' }}
+                  >
+                    View all {allPatients?.total} patients <ArrowRight size={11} />
+                  </Link>
+                </li>
+              )}
+            </ul>
+          )}
         </section>
       </div>
     </div>
