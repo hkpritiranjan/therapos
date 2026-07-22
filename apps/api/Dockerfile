@@ -7,6 +7,7 @@ RUN npm install
 COPY prisma ./prisma
 COPY packages/shared ./packages/shared
 COPY apps/api ./apps/api
+RUN npx prisma generate
 RUN cd apps/api && npx nest build
 RUN npm prune --production
 
@@ -20,4 +21,4 @@ COPY apps/api/package.json ./apps/api/
 COPY package.json ./
 ENV NODE_ENV=production
 EXPOSE 3001
-CMD ["node", "apps/api/dist/apps/api/src/main"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node apps/api/dist/apps/api/src/main"]
