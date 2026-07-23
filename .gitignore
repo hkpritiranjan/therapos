@@ -19,8 +19,7 @@ out/
 .env.test.local
 .env.production.local
 
-# Prisma migrations (tracked separately when ready)
-prisma/migrations/
+# Prisma migrations are tracked in source control
 
 # Logs
 npm-debug.log*
@@ -45,3 +44,4 @@ Thumbs.db
 # Testing
 coverage/
 .nyc_output/
+.vercel
