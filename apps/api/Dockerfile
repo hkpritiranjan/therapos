@@ -1,4 +1,5 @@
 FROM node:22-alpine AS builder
+RUN apk add --no-cache openssl
 WORKDIR /app
 COPY package*.json ./
 COPY packages/shared/package.json ./packages/shared/
@@ -12,6 +13,7 @@ RUN cd apps/api && npx nest build
 RUN npm prune --production
 
 FROM node:22-alpine
+RUN apk add --no-cache openssl
 WORKDIR /app
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
