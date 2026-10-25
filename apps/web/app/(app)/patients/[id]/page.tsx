@@ -53,10 +53,10 @@ function formatDateTime(d: Date | string | null | undefined): string {
 
 function StatusBadge({ status }: { status: PatientStatus }) {
   const config: Record<PatientStatus, { label: string; bg: string; color: string }> = {
-    ACTIVE: { label: 'Active', bg: 'rgba(16,185,129,0.15)', color: '#10B981' },
+    ACTIVE: { label: 'Active', bg: 'rgba(16,185,129,0.15)', color: '#1F7A5A' },
     INACTIVE: { label: 'Inactive', bg: 'rgba(148,163,184,0.1)', color: 'var(--text-mid)' },
-    WAITLIST: { label: 'Waitlist', bg: 'rgba(245,158,11,0.15)', color: '#F59E0B' },
-    DISCHARGED: { label: 'Discharged', bg: 'rgba(239,68,68,0.1)', color: '#EF4444' },
+    WAITLIST: { label: 'Waitlist', bg: 'rgba(245,158,11,0.15)', color: '#8A5A00' },
+    DISCHARGED: { label: 'Discharged', bg: 'rgba(239,68,68,0.1)', color: '#B8324D' },
   };
   const c = config[status] ?? config.INACTIVE;
   return (
@@ -71,10 +71,10 @@ function StatusBadge({ status }: { status: PatientStatus }) {
 
 function SessionStatusBadge({ status }: { status: SessionStatus }) {
   const config: Record<SessionStatus, { label: string; bg: string; color: string }> = {
-    SCHEDULED: { label: 'Scheduled', bg: 'rgba(59,130,246,0.15)', color: '#3B82F6' },
-    IN_PROGRESS: { label: 'In Progress', bg: 'rgba(245,158,11,0.15)', color: '#F59E0B' },
-    COMPLETED: { label: 'Completed', bg: 'rgba(16,185,129,0.15)', color: '#10B981' },
-    CANCELLED: { label: 'Cancelled', bg: 'rgba(239,68,68,0.1)', color: '#EF4444' },
+    SCHEDULED: { label: 'Scheduled', bg: 'rgba(59,130,246,0.15)', color: '#3B55C9' },
+    IN_PROGRESS: { label: 'In Progress', bg: 'rgba(245,158,11,0.15)', color: '#8A5A00' },
+    COMPLETED: { label: 'Completed', bg: 'rgba(16,185,129,0.15)', color: '#1F7A5A' },
+    CANCELLED: { label: 'Cancelled', bg: 'rgba(239,68,68,0.1)', color: '#B8324D' },
     NO_SHOW: { label: 'No Show', bg: 'rgba(148,163,184,0.1)', color: 'var(--text-mid)' },
   };
   const c = config[status] ?? config.SCHEDULED;

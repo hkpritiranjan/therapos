@@ -33,10 +33,10 @@ const config: Config = {
         },
 
         // Status colors
-        success: '#10B981',
-        warning: '#F59E0B',
-        danger: '#EF4444',
-        info: '#3B82F6',
+        success: '#1F7A5A',
+        warning: '#8A5A00',
+        danger: '#B8324D',
+        info: '#3B55C9',
 
         // Border
         border: {
@@ -45,17 +45,18 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ['var(--font-inter)', 'Inter', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-poppins)', 'Poppins', 'system-ui', 'sans-serif'],
+        serif: ['var(--font-alegreya)', 'Georgia', 'serif'],
         mono: ['JetBrains Mono', 'Menlo', 'monospace'],
       },
       borderRadius: {
-        DEFAULT: '0.5rem',
-        lg: '0.75rem',
-        xl: '1rem',
+        DEFAULT: '0.75rem',
+        lg: '1rem',
+        xl: '1.5rem',
       },
       boxShadow: {
         glow: '0 0 0 1px var(--accent)',
-        card: '0 1px 3px rgba(0,0,0,0.4)',
+        card: '0 6px 22px rgba(91,75,224,0.08)',
       },
     },
   },

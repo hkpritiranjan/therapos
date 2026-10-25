@@ -27,23 +27,10 @@ import {
   streamNoteDraft,
 } from '@/lib/api';
 import type { NoteFormat, Session, SessionNote } from '@/lib/api';
+import { parseDraft, formatStreamPreview } from '@/lib/draft-parser';
+import type { DraftFields } from '@/lib/draft-parser';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-
-interface DraftFields {
-  subjective: string;
-  objective: string;
-  assessment: string;
-  plan: string;
-  data: string;
-  dapAssessment: string;
-  dapPlan: string;
-  behavior: string;
-  intervention: string;
-  birpResponse: string;
-  birpPlan: string;
-  freeText: string;
-}
 
 const EMPTY_DRAFT: DraftFields = {
   subjective: '',
@@ -59,69 +46,6 @@ const EMPTY_DRAFT: DraftFields = {
   birpPlan: '',
   freeText: '',
 };
-
-// ── Draft text parser ─────────────────────────────────────────────────────────
-
-function extractSection(text: string, labels: string[], stopLabels: string[]): string | undefined {
-  const labelPat = labels.map((l) => `(?:\\*{1,2})?\\s*${l}(?:\\s+\\([^)]*\\))?(?:\\*{1,2})?`).join('|');
-  const stopPat = stopLabels.map((l) => `(?:\\*{1,2})?\\s*${l}(?:\\s+\\([^)]*\\))?(?:\\*{1,2})?\\s*[:\\-]`).join('|');
-  const regex = new RegExp(
-    `(?:^|\\n)(?:#{1,3}\\s*)?(?:${labelPat})\\s*[:\\-]?\\s*\\n?([\\s\\S]*?)(?=(?:\\n(?:#{1,3}\\s*)?(?:${stopPat}))|$)`,
-    'i',
-  );
-  const match = text.match(regex);
-  return match ? match[1].trim() : undefined;
-}
-
-function parseDraft(format: NoteFormat, text: string): Partial<DraftFields> {
-  if (format === 'FREE') return { freeText: text };
-
-  if (format === 'SOAP') {
-    const allLabels = ['Subjective', 'Objective', 'Assessment', 'Plan'];
-    const s = extractSection(text, ['Subjective', 'S'], ['Objective', 'Assessment', 'Plan']);
-    const o = extractSection(text, ['Objective', 'O'], ['Assessment', 'Plan']);
-    const a = extractSection(text, ['Assessment', 'A'], ['Plan']);
-    const p = extractSection(text, ['Plan', 'P'], []);
-    if (s !== undefined || o !== undefined || a !== undefined || p !== undefined) {
-      return {
-        subjective: s ?? '',
-        objective: o ?? '',
-        assessment: a ?? '',
-        plan: p ?? '',
-      };
-    }
-    void allLabels;
-    return { subjective: text.trim() };
-  }
-
-  if (format === 'DAP') {
-    const d = extractSection(text, ['Data', 'D'], ['Assessment', 'Plan']);
-    const a = extractSection(text, ['Assessment', 'A'], ['Plan']);
-    const p = extractSection(text, ['Plan', 'P'], []);
-    if (d !== undefined || a !== undefined || p !== undefined) {
-      return { data: d ?? '', dapAssessment: a ?? '', dapPlan: p ?? '' };
-    }
-    return { data: text.trim() };
-  }
-
-  if (format === 'BIRP') {
-    const b = extractSection(text, ['Behavior', 'B'], ['Intervention', 'Response', 'Plan']);
-    const i = extractSection(text, ['Intervention', 'I'], ['Response', 'Plan']);
-    const r = extractSection(text, ['Response', 'R'], ['Plan']);
-    const p = extractSection(text, ['Plan', 'P'], []);
-    if (b !== undefined || i !== undefined || r !== undefined || p !== undefined) {
-      return {
-        behavior: b ?? '',
-        intervention: i ?? '',
-        birpResponse: r ?? '',
-        birpPlan: p ?? '',
-      };
-    }
-    return { behavior: text.trim() };
-  }
-
-  return {};
-}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -141,10 +65,10 @@ function wordCount(text: string): number {
 
 function SessionStatusBadge({ status }: { status: Session['status'] }) {
   const config: Record<Session['status'], { label: string; color: string; bg: string }> = {
-    SCHEDULED: { label: 'Scheduled', color: '#3B82F6', bg: 'rgba(59,130,246,0.15)' },
-    IN_PROGRESS: { label: 'In Progress', color: '#F59E0B', bg: 'rgba(245,158,11,0.15)' },
-    COMPLETED: { label: 'Completed', color: '#10B981', bg: 'rgba(16,185,129,0.15)' },
-    CANCELLED: { label: 'Cancelled', color: '#EF4444', bg: 'rgba(239,68,68,0.1)' },
+    SCHEDULED: { label: 'Scheduled', color: '#3B55C9', bg: 'rgba(59,130,246,0.15)' },
+    IN_PROGRESS: { label: 'In Progress', color: '#8A5A00', bg: 'rgba(245,158,11,0.15)' },
+    COMPLETED: { label: 'Completed', color: '#1F7A5A', bg: 'rgba(16,185,129,0.15)' },
+    CANCELLED: { label: 'Cancelled', color: '#B8324D', bg: 'rgba(239,68,68,0.1)' },
     NO_SHOW: { label: 'No Show', color: 'var(--text-mid)', bg: 'rgba(148,163,184,0.1)' },
   };
   const c = config[status] ?? config.SCHEDULED;
@@ -392,7 +316,7 @@ export default function SessionWorkspacePage() {
       format,
       (chunk: string) => {
         accumulated += chunk;
-        setStreamDisplay(accumulated);
+        setStreamDisplay(formatStreamPreview(format, accumulated));
       },
       async () => {
         setIsStreaming(false);

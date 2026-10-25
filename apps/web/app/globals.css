@@ -4,27 +4,39 @@
 
 /* ── TherapOS Design Tokens ─────────────────────────────────────────────────── */
 :root {
-  /* Dark theme — default */
-  --bg-base: #0B0F19;
-  --bg-surface: #111827;
-  --bg-elevated: #1A2235;
-  --bg-sidebar: #0D1321;
+  /* Light theme — calm, warm, human (palette shared with the docs site) */
+  --bg-base: #FBF9F4;
+  --bg-surface: #FFFFFF;
+  --bg-elevated: #F4F1FF;
+  --bg-sidebar: #F6F3FF;
 
-  --accent: #6366F1;
-  --accent-hover: #4F46E5;
-  --accent-subtle: rgba(99, 102, 241, 0.12);
+  --accent: #5B4BE0;
+  --accent-hover: #4A3BC8;
+  --accent-subtle: rgba(108, 92, 240, 0.12);
 
-  --text-primary: #E2E8F0;
-  --text-mid: #94A3B8;
-  --text-muted: #4B6280;
+  --text-primary: #1F1340;
+  --text-mid: #5B5675;
+  --text-muted: #6F6A8A;
 
-  --border: rgba(148, 163, 184, 0.12);
-  --border-subtle: rgba(148, 163, 184, 0.06);
+  --border: rgba(91, 75, 224, 0.16);
+  --border-subtle: rgba(91, 75, 224, 0.08);
 
-  --success: #10B981;
-  --warning: #F59E0B;
-  --danger: #EF4444;
-  --info: #3B82F6;
+  --success: #1F7A5A;
+  --warning: #8A5A00;
+  --danger: #B8324D;
+  --info: #3B55C9;
+
+  /* Brand pastels (decorative / soft fills) */
+  --navy: #070C56;
+  --yellow: #F4CF4B;
+  --teal: #7FC6C0;
+  --mint: #A5DDB5;
+  --coral: #E5647A;
+  --pink: #F0589F;
+  --peach: #FBE3CC;
+  --lavender: #A9A6F5;
+
+  --shadow-card: 0 6px 22px rgba(91, 75, 224, 0.08);
 
   /* Sidebar width */
   --sidebar-w: 240px;
@@ -45,6 +57,19 @@ body {
   background-color: var(--bg-base);
   color: var(--text-primary);
   min-height: 100dvh;
+  font-family: var(--font-poppins), system-ui, sans-serif;
+}
+/* soft pastel wash behind the app */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(520px 420px at 96% 4%, rgba(165, 221, 181, 0.28), transparent 70%),
+    radial-gradient(520px 440px at 0% 60%, rgba(255, 227, 239, 0.5), transparent 70%),
+    radial-gradient(480px 400px at 90% 92%, rgba(221, 230, 255, 0.6), transparent 70%);
 }
 
 /* ── Typography ─────────────────────────────────────────────────────────────── */
@@ -52,6 +77,14 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--text-primary);
   font-weight: 600;
   letter-spacing: -0.01em;
+}
+h1, h2 {
+  font-family: var(--font-alegreya), Georgia, serif;
+  font-weight: 700;
+}
+:focus-visible {
+  outline: 3px solid #6C5CF0;
+  outline-offset: 2px;
 }
 
 /* ── Scrollbar ──────────────────────────────────────────────────────────────── */
@@ -63,11 +96,11 @@ h1, h2, h3, h4, h5, h6 {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.15);
+  background: rgba(91, 75, 224, 0.22);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.3);
+  background: rgba(91, 75, 224, 0.38);
 }
 
 /* ── Component layer ────────────────────────────────────────────────────────── */
@@ -77,6 +110,7 @@ h1, h2, h3, h4, h5, h6 {
     @apply rounded-lg border p-5;
     background-color: var(--bg-surface);
     border-color: var(--border);
+    box-shadow: var(--shadow-card);
   }
 
   .card-elevated {
@@ -94,6 +128,8 @@ h1, h2, h3, h4, h5, h6 {
     @apply btn;
     background-color: var(--accent);
     color: #fff;
+    border-radius: 9999px;
+    box-shadow: 0 6px 16px rgba(91, 75, 224, 0.25);
   }
   .btn-primary:hover {
     background-color: var(--accent-hover);
@@ -102,6 +138,7 @@ h1, h2, h3, h4, h5, h6 {
   .btn-ghost {
     @apply btn;
     color: var(--text-mid);
+    border-radius: 9999px;
   }
   .btn-ghost:hover {
     background-color: var(--bg-elevated);
@@ -125,7 +162,7 @@ h1, h2, h3, h4, h5, h6 {
   .badge-active {
     @apply badge;
     background-color: rgba(16, 185, 129, 0.15);
-    color: #10B981;
+    color: #1F7A5A;
   }
 
   .badge-inactive {
@@ -137,12 +174,20 @@ h1, h2, h3, h4, h5, h6 {
   .badge-waitlist {
     @apply badge;
     background-color: rgba(245, 158, 11, 0.15);
-    color: #F59E0B;
+    color: #8A5A00;
   }
 
   .badge-discharged {
     @apply badge;
     background-color: rgba(239, 68, 68, 0.1);
-    color: #EF4444;
+    color: #B8324D;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
   }
 }

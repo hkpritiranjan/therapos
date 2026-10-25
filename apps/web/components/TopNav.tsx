@@ -85,7 +85,7 @@ export function TopNav() {
           className="ml-2 rounded-full px-2 py-0.5 text-xs font-medium"
           style={{
             backgroundColor: 'rgba(245, 158, 11, 0.15)',
-            color: '#F59E0B',
+            color: '#8A5A00',
             fontSize: '10px',
           }}
         >
